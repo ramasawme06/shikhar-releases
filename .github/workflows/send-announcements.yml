@@ -1,0 +1,32 @@
+# Goes in the PUBLIC releases repo as .github/workflows/send-announcements.yml (with send.dart and pubspec.yaml in push_sender/).
+# Runs every 10 minutes (GitHub may start it a little late) and pushes any announcement that has not been pushed yet.
+# Does nothing until the repository secret exists. Needs the repository secret SHIKHAR_PUSH_KEY: the JSON key of a service account that has only
+# "Firebase Cloud Messaging API Admin" and "Cloud Datastore User".
+name: send-announcements
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+concurrency: send-announcements
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HAS_KEY: ${{ secrets.SHIKHAR_PUSH_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.3.0'
+      - name: Write the key
+        if: env.HAS_KEY == 'true'
+        run: umask 077 && printf '%s' "$KEY" > "$RUNNER_TEMP/key.json"
+        env:
+          KEY: ${{ secrets.SHIKHAR_PUSH_KEY }}
+      - name: Send
+        if: env.HAS_KEY == 'true'
+        working-directory: push_sender
+        run: dart pub get && dart run send.dart
+        env:
+          SHIKHAR_SERVICE_ACCOUNT: ${{ runner.temp }}/key.json

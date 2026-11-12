@@ -1,0 +1,9 @@
+name: shikhar_push_sender
+description: Sends the push for the teacher's announcements (runs on GitHub Actions).
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  googleapis_auth: ^1.4.1
